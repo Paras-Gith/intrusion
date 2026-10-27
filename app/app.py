@@ -18,10 +18,9 @@ from flask import (Flask, abort, flash, redirect, render_template, request,
 
 import database as db
 from config import FEATURE_NAMES, FIGURES_DIR
-from latency.explain import load_artifacts
+from explain import load_artifacts
 from preprocess import transform_new
-from latency.rules import alert_for_flow
-
+from rules import alert_for_flow
 MAX_ROWS = 300      # flows analysed per upload
 MAX_PLOTS = 10      # waterfall plots drawn per upload (highest-confidence attacks)
 PLOTS_DIR = BASE_DIR / "app" / "static" / "plots"
