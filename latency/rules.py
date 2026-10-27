@@ -9,7 +9,7 @@ Run a demo from the project root:  python src/rules.py
 import pandas as pd
 
 from config import DATA_PROCESSED, FIGURES_DIR
-from explain import display_data, explain_flow, load_artifacts
+from latency.explain import display_data, explain_flow, load_artifacts
 
 # feature -> (human label, kind); kind controls how the value is written
 FEATURES = {

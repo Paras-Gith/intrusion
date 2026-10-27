@@ -1,0 +1,4 @@
+body { background: #f6f7f9; }
+.chart-box { position: relative; height: 230px; }
+.alert-text { max-width: 560px; font-size: 0.9rem; }
+.card { border: 0; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08); }

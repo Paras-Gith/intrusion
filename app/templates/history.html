@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}History{% endblock %}
+{% block content %}
+<h1 class="h4">Detection history</h1>
+<div class="table-responsive">
+<table class="table table-hover align-middle">
+  <thead><tr><th>#</th><th>File</th><th>Uploaded</th><th>Flows</th><th>Attacks</th><th>High severity</th><th></th></tr></thead>
+  <tbody>
+  {% for r in runs %}
+    <tr>
+      <td>{{ r['id'] }}</td><td>{{ r['filename'] }}</td><td>{{ r['uploaded_at'] }}</td>
+      <td>{{ r['total'] }}</td><td>{{ r['attacks'] }}</td><td>{{ r['high'] }}</td>
+      <td><a href="{{ url_for('results', run_id=r['id']) }}">Open</a></td>
+    </tr>
+  {% else %}
+    <tr><td colspan="7" class="text-muted">No runs yet. Upload a CSV first.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}

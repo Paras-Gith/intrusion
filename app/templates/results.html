@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Results - {{ run['filename'] }}{% endblock %}
+{% block content %}
+<h1 class="h4 mb-1">{{ run['filename'] }}</h1>
+<p class="text-muted">Analysed {{ run['uploaded_at'] }}</p>
+
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3"><div class="card text-center"><div class="card-body">
+    <div class="fs-3">{{ run['total'] }}</div><div class="small text-muted">Flows analysed</div></div></div></div>
+  <div class="col-6 col-md-3"><div class="card text-center"><div class="card-body">
+    <div class="fs-3 text-danger">{{ run['attacks'] }}</div><div class="small text-muted">Attacks flagged</div></div></div></div>
+  <div class="col-6 col-md-3"><div class="card text-center"><div class="card-body">
+    <div class="fs-3 text-success">{{ run['total'] - run['attacks'] }}</div><div class="small text-muted">Normal</div></div></div></div>
+  <div class="col-6 col-md-3"><div class="card text-center"><div class="card-body">
+    <div class="fs-3">{{ run['high'] }}</div><div class="small text-muted">High severity</div></div></div></div>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-md-6"><div class="card"><div class="card-body">
+    <h2 class="h6">Traffic split</h2>
+    <div class="chart-box"><canvas id="classChart"
+      data-normal="{{ run['total'] - run['attacks'] }}" data-attack="{{ run['attacks'] }}"></canvas></div>
+  </div></div></div>
+  <div class="col-md-6"><div class="card"><div class="card-body">
+    <h2 class="h6">Alert severity</h2>
+    <div class="chart-box"><canvas id="severityChart"
+      data-high="{{ sev.get('High', 0) }}" data-medium="{{ sev.get('Medium', 0) }}"
+      data-low="{{ sev.get('Low', 0) }}"></canvas></div>
+  </div></div></div>
+</div>
+
+<div class="d-flex justify-content-between align-items-center mb-2">
+  <h2 class="h5 mb-0">Alerts</h2>
+  <div class="btn-group btn-group-sm">
+    <a class="btn btn-outline-secondary {{ '' if only_attacks else 'active' }}"
+       href="{{ url_for('results', run_id=run['id']) }}">All flows</a>
+    <a class="btn btn-outline-secondary {{ 'active' if only_attacks else '' }}"
+       href="{{ url_for('results', run_id=run['id'], only='attacks') }}">Attacks only</a>
+  </div>
+</div>
+<p class="small text-muted">Waterfall plots are drawn for the {{ max_plots }} highest-confidence attacks in each upload.</p>
+
+<div class="table-responsive">
+<table class="table table-sm align-middle">
+  <thead><tr>
+    <th>Row</th><th>True label</th><th>Verdict</th><th>Confidence</th><th>Severity</th><th>Alert</th><th>Plot</th>
+  </tr></thead>
+  <tbody>
+  {% for d in dets %}
+    {% set attack = d['prediction'] == 'Attack' %}
+    <tr>
+      <td>{{ d['row_num'] }}</td>
+      <td>{{ d['true_label'] or '-' }}</td>
+      <td><span class="badge bg-{{ 'danger' if attack else 'success' }}">{{ d['prediction'] }}</span></td>
+      <td>{{ '%.1f' % (((d['probability'] if attack else 1 - d['probability']) * 100)) }}%</td>
+      <td><span class="badge bg-{{ {'High':'danger','Medium':'warning','Low':'info'}.get(d['severity'], 'secondary') }}">{{ d['severity'] }}</span></td>
+      <td class="alert-text">{{ d['summary'] }}</td>
+      <td>{% if d['plot_file'] %}<a href="{{ url_for('static', filename=d['plot_file']) }}" target="_blank">Waterfall</a>{% else %}-{% endif %}</td>
+    </tr>
+  {% else %}
+    <tr><td colspan="7" class="text-muted">No flows to show.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}

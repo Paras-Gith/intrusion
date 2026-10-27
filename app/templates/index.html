@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row g-4">
+  <div class="col-lg-7">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h1 class="h4">Analyse network flows</h1>
+        <p class="text-muted">Upload a CSV of connection records. Each flow is classified
+          as Normal or Attack, then explained with TreeSHAP and turned into a plain-English alert.</p>
+        <form action="{{ url_for('analyze') }}" method="post" enctype="multipart/form-data">
+          <div class="mb-3">
+            <input class="form-control" type="file" name="file" accept=".csv" required>
+          </div>
+          <button class="btn btn-primary" type="submit">Analyse flows</button>
+        </form>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-5">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h2 class="h6">CSV format</h2>
+        <ul class="small mb-0">
+          <li>A header row with the 41 NSL-KDD feature names (<code>duration</code>,
+              <code>protocol_type</code>, <code>service</code>, ... <code>dst_host_srv_rerror_rate</code>).</li>
+          <li>An optional <code>label</code> column is shown as the true label.</li>
+          <li>Up to 300 flows are analysed per upload.</li>
+          <li>Ready-made files are in <code>data/samples/</code>.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% if runs %}
+<h2 class="h5 mt-4">Recent runs</h2>
+<div class="list-group">
+  {% for r in runs %}
+  <a class="list-group-item list-group-item-action d-flex justify-content-between"
+     href="{{ url_for('results', run_id=r['id']) }}">
+    <span>{{ r['filename'] }} <small class="text-muted">{{ r['uploaded_at'] }}</small></span>
+    <span>{{ r['attacks'] }} attacks / {{ r['total'] }} flows</span>
+  </a>
+  {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

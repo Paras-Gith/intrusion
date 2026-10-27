@@ -1,0 +1,28 @@
+# Virtual environment
+venv/
+.venv/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Jupyter
+.ipynb_checkpoints/
+
+# VS Code
+.vscode/
+
+# Environment variables
+.env
+
+# Logs
+*.log
+
+# Data files (optional)
+data/raw/
+data/processed/
+
+# OS files
+.DS_Store
+Thumbs.db
