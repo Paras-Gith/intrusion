@@ -21,6 +21,7 @@ from config import FEATURE_NAMES, FIGURES_DIR
 from explain import load_artifacts
 from preprocess import transform_new
 from rules import alert_for_flow
+
 MAX_ROWS = 300      # flows analysed per upload
 MAX_PLOTS = 10      # waterfall plots drawn per upload (highest-confidence attacks)
 PLOTS_DIR = BASE_DIR / "app" / "static" / "plots"
@@ -36,6 +37,28 @@ PLOTS_DIR.mkdir(parents=True, exist_ok=True)
 _lock = threading.Lock()  # matplotlib/SHAP plotting is not thread-safe
 
 
+@app.template_filter("parse_alert")
+def parse_alert(summary):
+    """Split an alert sentence into its pattern hint and its list of reasons."""
+    text = summary or ""
+    hint = None
+    if "Pattern hint: " in text:
+        rest = text.split("Pattern hint: ", 1)[1]
+        hint, _, text = rest.partition(". ")
+    reasons = []
+    for marker in ("Main reasons: ", "Looks normal because: "):
+        if marker in text:
+            body = text.split(marker, 1)[1].rstrip(". ")
+            reasons = [r.strip()[:1].upper() + r.strip()[1:] for r in body.split("; ") if r.strip()]
+            break
+    return {"hint": hint, "reasons": reasons}
+
+
+@app.errorhandler(404)
+def not_found(_error):
+    return render_template("404.html"), 404
+
+
 @app.route("/")
 def index():
     return render_template("index.html", runs=db.list_runs()[:5])
@@ -44,12 +67,12 @@ def index():
 @app.route("/analyze", methods=["POST"])
 def analyze():
     file = request.files.get("file")
-    if not file or not file.filename.lower().endswith(".csv"):
+    if not file or not (file.filename or "").lower().endswith(".csv"):
         flash("Please choose a .csv file.", "danger")
         return redirect(url_for("index"))
 
     try:
-        raw = pd.read_csv(file)
+        raw = pd.read_csv(file.stream)
     except Exception:
         flash("Could not read that file as a CSV.", "danger")
         return redirect(url_for("index"))

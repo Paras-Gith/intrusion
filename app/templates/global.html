@@ -1,25 +1,38 @@
 {% extends "base.html" %}
-{% block title %}Global explanation{% endblock %}
+{% block title %}Model behaviour{% endblock %}
 {% block content %}
-<h1 class="h4">Global explanation</h1>
-<p class="text-muted">Which features drive the model's decisions overall, computed with TreeSHAP
-  on 1,000 test flows.</p>
-{% if available %}
-  <div class="row g-3">
-    {% if 'shap_bar.png' in available %}
-    <div class="col-lg-6"><div class="card"><div class="card-body">
-      <h2 class="h6">Average impact per feature</h2>
-      <img class="img-fluid" src="{{ url_for('figures', name='shap_bar.png') }}" alt="Mean absolute SHAP value per feature">
-    </div></div></div>
-    {% endif %}
-    {% if 'shap_summary.png' in available %}
-    <div class="col-lg-6"><div class="card"><div class="card-body">
-      <h2 class="h6">Impact and direction</h2>
-      <img class="img-fluid" src="{{ url_for('figures', name='shap_summary.png') }}" alt="SHAP summary plot">
-    </div></div></div>
-    {% endif %}
+<div class="page-head">
+  <div>
+    <h1 class="page-title">What the model relies on</h1>
+    <p class="page-sub">TreeSHAP applied to 1,000 held-out flows. Features nearer the top change the model's decisions more.</p>
   </div>
+</div>
+
+{% if available %}
+<div class="row g-4">
+  {% if 'shap_bar.png' in available %}
+  <div class="col-lg-6">
+    <section class="panel panel-pad h-100">
+      <h2 class="panel-title">Average impact per feature</h2>
+      <div class="plot-frame"><img class="img-fluid" src="{{ url_for('figures', name='shap_bar.png') }}" alt="Average absolute SHAP value for each feature"></div>
+      <p class="help mb-0">Longer bars mean the feature moves the model's output more, whichever direction it moves it.</p>
+    </section>
+  </div>
+  {% endif %}
+  {% if 'shap_summary.png' in available %}
+  <div class="col-lg-6">
+    <section class="panel panel-pad h-100">
+      <h2 class="panel-title">Impact and direction</h2>
+      <div class="plot-frame"><img class="img-fluid" src="{{ url_for('figures', name='shap_summary.png') }}" alt="SHAP summary plot showing each flow as a dot per feature"></div>
+      <p class="help mb-0">Each dot is one flow. Dots to the right push the model toward Attack, dots to the left toward Normal.
+        Red dots have a high value for that feature and blue dots a low one.</p>
+    </section>
+  </div>
+  {% endif %}
+</div>
 {% else %}
-  <div class="alert alert-info">No plots found yet. Run <code>python src/explain.py</code> first.</div>
+<div class="panel empty">
+  <p>No plots found yet. Run <code>python src/explain.py</code> to create them.</p>
+</div>
 {% endif %}
 {% endblock %}

@@ -1,47 +1,65 @@
 {% extends "base.html" %}
+{% from "_icons.html" import icon %}
 {% block content %}
-<div class="row g-4">
-  <div class="col-lg-7">
-    <div class="card shadow-sm">
-      <div class="card-body">
-        <h1 class="h4">Analyse network flows</h1>
-        <p class="text-muted">Upload a CSV of connection records. Each flow is classified
-          as Normal or Attack, then explained with TreeSHAP and turned into a plain-English alert.</p>
-        <form action="{{ url_for('analyze') }}" method="post" enctype="multipart/form-data">
-          <div class="mb-3">
-            <input class="form-control" type="file" name="file" accept=".csv" required>
-          </div>
-          <button class="btn btn-primary" type="submit">Analyse flows</button>
-        </form>
+<div class="row g-5 align-items-start">
+  <div class="col-lg-6">
+    <h1 class="hero-title">Every alert shows its evidence</h1>
+    <p class="lead-copy">Upload network flows. Each one is classified as normal or attack,
+      then explained in plain English using the features that drove the decision.</p>
+
+    <form id="uploadForm" action="{{ url_for('analyze') }}" method="post" enctype="multipart/form-data">
+      <div class="dropzone">
+        <input id="fileInput" type="file" name="file" accept=".csv" required aria-describedby="fileHelp">
+        <div class="dz-icon">{{ icon('upload', 26) }}</div>
+        <div class="dz-title">Drop a CSV file here, or click to choose one</div>
+        <div id="dzFile" class="dz-file" aria-live="polite"></div>
       </div>
-    </div>
+      <p id="fileHelp" class="help">The file needs a header row with the 41 NSL-KDD feature names.
+        Up to 300 flows are analysed per upload. Ready-made files are in <code>data/samples</code>.</p>
+      <button id="analyseBtn" type="submit" class="btn btn-ink" disabled>
+        <span class="spinner-border spinner-border-sm d-none" aria-hidden="true"></span>
+        <span class="btn-label">Analyse flows</span>
+      </button>
+    </form>
   </div>
-  <div class="col-lg-5">
-    <div class="card shadow-sm">
-      <div class="card-body">
-        <h2 class="h6">CSV format</h2>
-        <ul class="small mb-0">
-          <li>A header row with the 41 NSL-KDD feature names (<code>duration</code>,
-              <code>protocol_type</code>, <code>service</code>, ... <code>dst_host_srv_rerror_rate</code>).</li>
-          <li>An optional <code>label</code> column is shown as the true label.</li>
-          <li>Up to 300 flows are analysed per upload.</li>
-          <li>Ready-made files are in <code>data/samples/</code>.</li>
+
+  <div class="col-lg-6">
+    <section class="panel sample" aria-labelledby="sampleTitle">
+      <div class="panel-pad">
+        <h2 id="sampleTitle" class="panel-title">What an alert looks like</h2>
+        <div class="sample-head">
+          <span class="pill pill-attack">Attack</span>
+          <span class="pill pill-sev-high">High</span>
+          <span class="sub">100.0% confident</span>
+        </div>
+        <p class="hint"><span>Pattern hint:</span> SYN-flood-like traffic (DoS family)</p>
+        <ul class="evidence">
+          <li>Bytes sent by the source = 0</li>
+          <li>Connections to the same host in the last 2 s = 122</li>
+          <li>SYN error rate (same host) = 100%</li>
         </ul>
+        <p class="help mb-0">The evidence lists the features that pushed the model toward its verdict,
+          calculated with TreeSHAP. The pattern hint is a rule-based guess from the flow's values,
+          not a model output.</p>
       </div>
-    </div>
+    </section>
   </div>
 </div>
 
 {% if runs %}
-<h2 class="h5 mt-4">Recent runs</h2>
-<div class="list-group">
-  {% for r in runs %}
-  <a class="list-group-item list-group-item-action d-flex justify-content-between"
-     href="{{ url_for('results', run_id=r['id']) }}">
-    <span>{{ r['filename'] }} <small class="text-muted">{{ r['uploaded_at'] }}</small></span>
-    <span>{{ r['attacks'] }} attacks / {{ r['total'] }} flows</span>
-  </a>
-  {% endfor %}
-</div>
+<section class="mt-5">
+  <h2 class="section-title">Recent uploads</h2>
+  <div class="panel">
+    <ul class="runlist">
+      {% for r in runs %}
+      <li>
+        <a href="{{ url_for('results', run_id=r['id']) }}">{{ r['filename'] }}</a>
+        <span class="sub">{{ r['uploaded_at'] }}</span>
+        <span class="runlist-count">{{ r['attacks'] }} attacks in {{ r['total'] }} flows</span>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+</section>
 {% endif %}
 {% endblock %}

@@ -1,66 +1,122 @@
 {% extends "base.html" %}
-{% block title %}Results - {{ run['filename'] }}{% endblock %}
+{% from "_icons.html" import icon %}
+{% block title %}{{ run['filename'] }} - Results{% endblock %}
 {% block content %}
-<h1 class="h4 mb-1">{{ run['filename'] }}</h1>
-<p class="text-muted">Analysed {{ run['uploaded_at'] }}</p>
+{% set normal = run['total'] - run['attacks'] %}
+{% set pct = (run['attacks'] / run['total'] * 100) | round | int %}
+{% set nz = [sev.get('High', 0), sev.get('Medium', 0), sev.get('Low', 0)] | select | list %}
 
-<div class="row g-3 mb-4">
-  <div class="col-6 col-md-3"><div class="card text-center"><div class="card-body">
-    <div class="fs-3">{{ run['total'] }}</div><div class="small text-muted">Flows analysed</div></div></div></div>
-  <div class="col-6 col-md-3"><div class="card text-center"><div class="card-body">
-    <div class="fs-3 text-danger">{{ run['attacks'] }}</div><div class="small text-muted">Attacks flagged</div></div></div></div>
-  <div class="col-6 col-md-3"><div class="card text-center"><div class="card-body">
-    <div class="fs-3 text-success">{{ run['total'] - run['attacks'] }}</div><div class="small text-muted">Normal</div></div></div></div>
-  <div class="col-6 col-md-3"><div class="card text-center"><div class="card-body">
-    <div class="fs-3">{{ run['high'] }}</div><div class="small text-muted">High severity</div></div></div></div>
+<div class="page-head">
+  <div>
+    <h1 class="page-title">{{ run['filename'] }}</h1>
+    <p class="page-sub">Analysed {{ run['uploaded_at'] }}</p>
+  </div>
+  <a class="btn btn-quiet" href="{{ url_for('index') }}">Analyse another file</a>
 </div>
 
-<div class="row g-3 mb-4">
-  <div class="col-md-6"><div class="card"><div class="card-body">
-    <h2 class="h6">Traffic split</h2>
-    <div class="chart-box"><canvas id="classChart"
-      data-normal="{{ run['total'] - run['attacks'] }}" data-attack="{{ run['attacks'] }}"></canvas></div>
-  </div></div></div>
-  <div class="col-md-6"><div class="card"><div class="card-body">
-    <h2 class="h6">Alert severity</h2>
-    <div class="chart-box"><canvas id="severityChart"
+<section class="panel strip" aria-label="Summary">
+  <div><div class="big">{{ run['total'] }}</div><div class="lbl">Flows analysed</div></div>
+  <div><div class="big text-threat">{{ run['attacks'] }}</div><div class="lbl">Flagged as attack</div><div class="sub">{{ pct }}% of flows</div></div>
+  <div><div class="big text-safe">{{ normal }}</div><div class="lbl">Normal</div></div>
+  <div><div class="big">{{ run['high'] }}</div><div class="lbl">High severity</div><div class="sub">Confidence of 90% or more</div></div>
+</section>
+
+<section class="panel charts mt-4" aria-label="Charts">
+  <div class="charts-cell">
+    <h2 class="chart-title">Traffic split</h2>
+    <div class="chart-box"><canvas id="classChart" role="img"
+      aria-label="Traffic split: {{ normal }} normal, {{ run['attacks'] }} attack"
+      data-normal="{{ normal }}" data-attack="{{ run['attacks'] }}"></canvas></div>
+  </div>
+  <div class="charts-cell">
+    <h2 class="chart-title">Alerts by severity</h2>
+    <div class="chart-box"><canvas id="severityChart" role="img"
+      aria-label="Alerts by severity: {{ sev.get('High', 0) }} high, {{ sev.get('Medium', 0) }} medium, {{ sev.get('Low', 0) }} low"
       data-high="{{ sev.get('High', 0) }}" data-medium="{{ sev.get('Medium', 0) }}"
       data-low="{{ sev.get('Low', 0) }}"></canvas></div>
-  </div></div></div>
-</div>
+    {% if run['attacks'] and nz|length <= 1 %}
+    <p class="help mb-0">Severity follows the model's confidence, and this model is very confident, so most alerts share one level.</p>
+    {% endif %}
+  </div>
+</section>
 
-<div class="d-flex justify-content-between align-items-center mb-2">
-  <h2 class="h5 mb-0">Alerts</h2>
-  <div class="btn-group btn-group-sm">
-    <a class="btn btn-outline-secondary {{ '' if only_attacks else 'active' }}"
-       href="{{ url_for('results', run_id=run['id']) }}">All flows</a>
-    <a class="btn btn-outline-secondary {{ 'active' if only_attacks else '' }}"
-       href="{{ url_for('results', run_id=run['id'], only='attacks') }}">Attacks only</a>
+<div class="d-flex justify-content-between align-items-end flex-wrap gap-2 mt-5 mb-2">
+  <div>
+    <h2 class="section-title mb-1">Alerts</h2>
+    <p class="help mb-0">Evidence plots are drawn for the {{ max_plots }} highest-confidence attacks in each upload.</p>
+  </div>
+  <div class="seg" role="group" aria-label="Filter alerts">
+    <a href="{{ url_for('results', run_id=run['id']) }}" class="{{ '' if only_attacks else 'active' }}">All flows</a>
+    <a href="{{ url_for('results', run_id=run['id'], only='attacks') }}" class="{{ 'active' if only_attacks else '' }}">Attacks only</a>
   </div>
 </div>
-<p class="small text-muted">Waterfall plots are drawn for the {{ max_plots }} highest-confidence attacks in each upload.</p>
 
+<div class="panel">
 <div class="table-responsive">
-<table class="table table-sm align-middle">
+<table class="findings">
   <thead><tr>
-    <th>Row</th><th>True label</th><th>Verdict</th><th>Confidence</th><th>Severity</th><th>Alert</th><th>Plot</th>
+    <th scope="col">Flow</th><th scope="col">Verdict</th><th scope="col">Severity</th>
+    <th scope="col">Why this verdict</th><th scope="col">True label</th><th scope="col"><span class="visually-hidden">Plot</span></th>
   </tr></thead>
   <tbody>
   {% for d in dets %}
     {% set attack = d['prediction'] == 'Attack' %}
-    <tr>
-      <td>{{ d['row_num'] }}</td>
-      <td>{{ d['true_label'] or '-' }}</td>
-      <td><span class="badge bg-{{ 'danger' if attack else 'success' }}">{{ d['prediction'] }}</span></td>
-      <td>{{ '%.1f' % (((d['probability'] if attack else 1 - d['probability']) * 100)) }}%</td>
-      <td><span class="badge bg-{{ {'High':'danger','Medium':'warning','Low':'info'}.get(d['severity'], 'secondary') }}">{{ d['severity'] }}</span></td>
-      <td class="alert-text">{{ d['summary'] }}</td>
-      <td>{% if d['plot_file'] %}<a href="{{ url_for('static', filename=d['plot_file']) }}" target="_blank">Waterfall</a>{% else %}-{% endif %}</td>
+    {% set parsed = d['summary'] | parse_alert %}
+    {% set conf = (d['probability'] if attack else 1 - d['probability']) * 100 %}
+    {% set tl = d['true_label'] %}
+    <tr class="{{ 'is-attack' if attack else '' }}">
+      <td class="num">{{ d['row_num'] }}</td>
+      <td>
+        <span class="pill {{ 'pill-attack' if attack else 'pill-normal' }}">{{ d['prediction'] }}</span>
+        <div class="sub num">{{ '%.1f' % conf }}% confident</div>
+      </td>
+      <td>
+        {% if attack %}<span class="pill pill-sev-{{ d['severity']|lower }}">{{ d['severity'] }}</span>
+        {% else %}<span class="sub">None</span>{% endif %}
+      </td>
+      <td class="why">
+        {% if parsed.hint %}<p class="hint"><span>Pattern hint:</span> {{ parsed.hint }}</p>{% endif %}
+        {% if parsed.reasons %}<ul class="evidence">{% for r in parsed.reasons %}<li>{{ r }}</li>{% endfor %}</ul>{% endif %}
+      </td>
+      <td>
+        {% if tl %}
+          {{ tl }}
+          {% set expected = 'Normal' if tl == 'normal' else 'Attack' %}
+          {% if expected == d['prediction'] %}
+            <span class="match ok" title="Verdict agrees with the true label">{{ icon('check', 15) }}<span class="visually-hidden">Verdict agrees</span></span>
+          {% else %}
+            <span class="match bad" title="Verdict disagrees with the true label">{{ icon('cross', 15) }}<span class="visually-hidden">Verdict disagrees</span></span>
+          {% endif %}
+        {% else %}<span class="sub">Not provided</span>{% endif %}
+      </td>
+      <td class="text-end">
+        {% if d['plot_file'] %}
+        <button type="button" class="btn btn-quiet btn-sm" data-bs-toggle="modal" data-bs-target="#plotModal"
+          data-img="{{ url_for('static', filename=d['plot_file']) }}" data-row="{{ d['row_num'] }}">View plot</button>
+        {% endif %}
+      </td>
     </tr>
   {% else %}
-    <tr><td colspan="7" class="text-muted">No flows to show.</td></tr>
+    <tr><td colspan="6" class="sub p-4">No flows to show.</td></tr>
   {% endfor %}
   </tbody>
 </table>
+</div>
+</div>
+
+<div class="modal fade" id="plotModal" tabindex="-1" aria-labelledby="plotModalTitle" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title" id="plotModalTitle">Why this flow was flagged</h2>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="plot-frame"><img class="img-fluid" src="" alt=""></div>
+        <p class="help mt-3 mb-0">Red bars push the model toward Attack and blue bars toward Normal.
+          Bar lengths are in the model's log-odds, and the grey numbers are the flow's real values.</p>
+      </div>
+    </div>
+  </div>
 </div>
 {% endblock %}
