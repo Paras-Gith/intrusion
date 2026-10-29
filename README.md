@@ -82,8 +82,7 @@ Every connection gets a row with its verdict, confidence, severity and the reaso
 
 Clicking **View plot** opens a "waterfall" picture for one connection. Red bars push the model toward "attack" and blue bars push toward "normal". The grey numbers are the connection's real values.
 
-<!-- SCREENSHOT 4: the View plot pop-up open on one attack. Save as docs/screenshots/04-evidence-plot.png -->
-<img src="docs/screenshots/04-evidence-plot.png" alt="Waterfall plot explaining one alert" width="850">
+![image alt](https://github.com/Paras-Gith/intrusion/blob/337f1a95ddd93567d600833c4d50eacad87e1439/plot.png)
 
 ### 5. What the model relies on overall
 
