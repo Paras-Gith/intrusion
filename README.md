@@ -2,8 +2,6 @@
 
 A network intrusion detector that does not just say "attack". It also tells you **why**.
 
-A B.Tech CSE minor project by Paras ([Paras-Gith](https://github.com/Paras-Gith)).
-
 ---
 
 ## The story in one minute
@@ -66,22 +64,19 @@ An analyst can read that in five seconds and agree or disagree with it.
 
 You drop in a CSV file of network connections and press **Analyse flows**. The example alert on the right shows what the output looks like.
 
-<!-- SCREENSHOT 1: the home page (Analyse). Save as docs/screenshots/01-upload-page.png -->
-<img src="docs/screenshots/01-upload-page.png" alt="Upload page of the dashboard" width="850">
+![image alt](https://github.com/Paras-Gith/intrusion/blob/fd06f89d85585f4ee1d53697fa7d546347e626a9/main.png)
 
 ### 2. The results summary
 
 After the upload you see how many connections were checked, how many were flagged as attacks, and a chart of normal versus attack traffic and of alert severity.
 
-<!-- SCREENSHOT 2: top of a results page (summary strip and the two charts). Use sample_attack_types.csv. Save as docs/screenshots/02-results-summary.png -->
-<img src="docs/screenshots/02-results-summary.png" alt="Results summary with charts" width="850">
+![image alt](https://github.com/Paras-Gith/intrusion/blob/fd06f89d85585f4ee1d53697fa7d546347e626a9/main_att_1.png)
 
 ### 3. The alerts table
 
 Every connection gets a row with its verdict, confidence, severity and the reasons. A red edge marks attacks. A tick means the verdict matches the true label from the data file.
 
-<!-- SCREENSHOT 3: the alerts table showing several attack rows with pattern hints and evidence. Save as docs/screenshots/03-alerts-table.png -->
-<img src="docs/screenshots/03-alerts-table.png" alt="Alerts table with reasons" width="850">
+![image alt](https://github.com/Paras-Gith/intrusion/blob/fd06f89d85585f4ee1d53697fa7d546347e626a9/main_att_2.png)
 
 ### 4. The evidence plot
 
@@ -94,15 +89,13 @@ Clicking **View plot** opens a "waterfall" picture for one connection. Red bars 
 
 This page shows which facts matter most to the model across 1,000 test connections.
 
-<!-- SCREENSHOT 5: the "Model behaviour" page with both plots visible. Save as docs/screenshots/05-model-behaviour.png -->
-<img src="docs/screenshots/05-model-behaviour.png" alt="Global SHAP explanation page" width="850">
+![image alt](https://github.com/Paras-Gith/intrusion/blob/fd06f89d85585f4ee1d53697fa7d546347e626a9/main_model.png)
 
 ### 6. History
 
 Every upload is saved, so you can open an old result again.
 
-<!-- SCREENSHOT 6: the History page with a few runs listed. Save as docs/screenshots/06-history.png -->
-<img src="docs/screenshots/06-history.png" alt="History page" width="850">
+![image alt](https://github.com/Paras-Gith/intrusion/blob/fd06f89d85585f4ee1d53697fa7d546347e626a9/main.png)
 
 ### Plots made by the code
 
